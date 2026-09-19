@@ -1,4 +1,4 @@
-"""合成数据集：blobs / moons / 形状检测 / 字符文本。
+"""合成数据集：blobs / moons / 形状检测 。
 
 合成数据让四个任务示例可以完全离线、可复现地跑通。
 """
@@ -103,45 +103,3 @@ def _in_triangle(xx, yy, v0, v1, v2):
     neg = (d1 < 0) & (d2 < 0) & (d3 < 0)
     pos = (d1 > 0) & (d2 > 0) & (d3 > 0)
     return neg | pos
-
-
-# ---------------------------------------------------------------------------
-# 字符级文本生成
-# ---------------------------------------------------------------------------
-class CharTextDataset(Dataset):
-    """字符级语言模型数据：从文本切出等长窗口。
-
-    返回: (input_ids (seq_len,), target_ids (seq_len,))
-    """
-
-    def __init__(self, text, seq_len=32, step=None, seed=0):
-        self.text = text
-        self.seq_len = seq_len
-        self.step = step or seq_len
-        chars = sorted(set(text))
-        self.vocab = {c: i for i, c in enumerate(chars)}
-        self.inv_vocab = {i: c for c, i in self.vocab.items()}
-        self.ids = np.array([self.vocab[c] for c in text], dtype=np.int64)
-        n = (len(self.ids) - seq_len - 1) // self.step
-        self.indices = np.arange(0, n * self.step, self.step)
-
-    @property
-    def vocab_size(self):
-        return len(self.vocab)
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, index):
-        start = self.indices[index]
-        x = self.ids[start:start + self.seq_len]
-        y = self.ids[start + 1:start + 1 + self.seq_len]
-        return x, y
-
-
-def load_sample_text(path=None):
-    """加载内置的公开领域英文文本（《爱丽丝梦游仙境》节选），供字符模型使用。"""
-    p = path or os.path.join(os.path.dirname(__file__), '..', '..', 'data',
-                             'alice_excerpt.txt')
-    with open(p, 'r', encoding='utf-8') as f:
-        return f.read()
