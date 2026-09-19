@@ -24,6 +24,7 @@ from . import metrics
 from . import serialization
 from . import viz
 from . import parallel
+from . import models
 from .inference import InferenceEngine
 from .quantization import quantize_model, dequantize_model, compute_quantization_error
 
@@ -38,6 +39,8 @@ __all__ = [
     'Tensor', 'tensor', 'F', 'ops',
     # 神经网络
     'nn',
+    # 模型库
+    'models',
     # 训练三件套
     'loss', 'optim', 'metrics',
     # 数据

@@ -19,11 +19,11 @@ def demo_classification(model_name, model_cls, model_kwargs):
 
     # 1. 数据准备
     print("\n📊 1. 数据准备")
-    X = np.random.randn(100, 1, 32, 32).astype(np.float64)
-    y = np.random.randint(0, 3, 100).astype(np.int64)
-    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X[:80], y[:80]), batch_size=16, shuffle=True)
-    val_dl = zt.data.DataLoader(zt.data.TensorDataset(X[80:], y[80:]), batch_size=16)
-    print(f"   训练集: {X[:80].shape}, 验证集: {X[80:].shape}")
+    X = np.random.randn(60, 1, 32, 32).astype(np.float64)
+    y = np.random.randint(0, 3, 60).astype(np.int64)
+    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X[:48], y[:48]), batch_size=8, shuffle=True)
+    val_dl = zt.data.DataLoader(zt.data.TensorDataset(X[48:], y[48:]), batch_size=8)
+    print(f"   训练集: {X[:48].shape}, 验证集: {X[48:].shape}")
 
     # 2. 模型创建
     print("\n🏗️ 2. 模型创建")
@@ -35,11 +35,11 @@ def demo_classification(model_name, model_cls, model_kwargs):
     trainer = zt.Trainer(
         model, zt.loss.CrossEntropyLoss(),
         zt.optim.Adam(model.parameters(), lr=1e-3),
-        train_dl, val_loader=val_dl, epochs=5,
+        train_dl, val_loader=val_dl, epochs=3,
         metrics=['accuracy'], callbacks=[zt.ProgressBar()]
     )
     history = trainer.fit()
-    print(f"   最终训练 loss: {history['train_loss'][-1]:.4f}")
+    print(f"   最终训练 loss: {history['loss'][-1]:.4f}")
 
     # 4. 保存
     print("\n💾 4. 保存模型")
@@ -77,8 +77,8 @@ def demo_yolo():
 
     print("\n📊 1. 数据准备（合成检测数据）")
     from zerotorch.data.datasets import ShapesDetection
-    ds = ShapesDetection(n_samples=80, img_size=32, max_objects=3)
-    train_dl = zt.data.DataLoader(ds, batch_size=8, shuffle=True)
+    ds = ShapesDetection(num_samples=60, img_size=32, max_objects=3)
+    train_dl = zt.data.DataLoader(ds, batch_size=4, shuffle=True)
     print(f"   样本数: {len(ds)}")
 
     print("\n🏗️ 2. 模型创建")
@@ -108,8 +108,8 @@ def demo_bert():
     print(f"{'='*60}")
 
     print("\n📊 1. 数据准备（合成 token 序列）")
-    X = np.random.randint(0, 500, size=(100, 16)).astype(np.int64)
-    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X, X), batch_size=16, shuffle=True)
+    X = np.random.randint(0, 500, size=(60, 16)).astype(np.int64)
+    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X, X), batch_size=8, shuffle=True)
     print(f"   序列长度: 16, 词表大小: 500")
 
     print("\n🏗️ 2. 模型创建")
@@ -118,7 +118,7 @@ def demo_bert():
     print(f"   参数量: {model.num_parameters():,}")
 
     print("\n🏋️ 3. MLM 训练")
-    input_ids = zt.tensor(X[:16])
+    input_ids = zt.tensor(X[:8])
     mlm_logits, seq_out = model(input_ids)
     print(f"   MLM logits: {mlm_logits.data.shape}")
     print(f"   序列输出: {seq_out.data.shape}")
@@ -139,10 +139,10 @@ def demo_unet():
     print(f"{'='*60}")
 
     print("\n📊 1. 数据准备（合成分割数据）")
-    X = np.random.randn(100, 1, 32, 32).astype(np.float64)
-    y = np.random.randint(0, 3, size=(100, 32, 32)).astype(np.int64)
-    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X[:80], y[:80]), batch_size=8, shuffle=True)
-    print(f"   输入: {X[:80].shape}, 分割 mask: {y[:80].shape}")
+    X = np.random.randn(60, 1, 32, 32).astype(np.float64)
+    y = np.random.randint(0, 3, size=(60, 32, 32)).astype(np.int64)
+    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X[:48], y[:48]), batch_size=4, shuffle=True)
+    print(f"   输入: {X[:48].shape}, 分割 mask: {y[:48].shape}")
 
     print("\n🏗️ 2. 模型创建")
     from zerotorch.models import UNetLite
@@ -174,8 +174,8 @@ def demo_gpt():
     print(f"{'='*60}")
 
     print("\n📊 1. 数据准备（合成 token 序列）")
-    X = np.random.randint(0, 500, size=(100, 16)).astype(np.int64)
-    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X, X), batch_size=16, shuffle=True)
+    X = np.random.randint(0, 500, size=(60, 16)).astype(np.int64)
+    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X, X), batch_size=8, shuffle=True)
     print(f"   序列长度: 16, 词表大小: 500")
 
     print("\n🏗️ 2. 模型创建")
@@ -184,7 +184,7 @@ def demo_gpt():
     print(f"   参数量: {model.num_parameters():,}")
 
     print("\n🏋️ 3. 自回归训练（teacher forcing）")
-    input_ids = zt.tensor(X[:16])
+    input_ids = zt.tensor(X[:8])
     logits = model(input_ids)
     print(f"   前向输出: {logits.data.shape}")  # (batch, 16, 500)
     logits.sum().backward()
@@ -205,8 +205,8 @@ def demo_dcgan():
     print(f"{'='*60}")
 
     print("\n📊 1. 数据准备（真实图像）")
-    X = np.random.randn(100, 1, 32, 32).astype(np.float64)
-    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X, X), batch_size=16, shuffle=True)
+    X = np.random.randn(60, 1, 32, 32).astype(np.float64)
+    train_dl = zt.data.DataLoader(zt.data.TensorDataset(X, X), batch_size=8, shuffle=True)
     print(f"   真实图像: {X.shape}")
 
     print("\n🏗️ 2. 模型创建")
@@ -229,6 +229,38 @@ def demo_dcgan():
     print(f"\n✅ 【DCGAN-lite】流程完成！")
 
 
+def demo_multimodal():
+    """Multimodal-lite 图文匹配完整流程。"""
+    print(f"\n{'='*60}")
+    print("【Multimodal-lite】图文匹配完整流程")
+    print(f"{'='*60}")
+
+    print("\n📊 1. 数据准备（合成图文对）")
+    images = np.random.randn(60, 1, 32, 32).astype(np.float64)
+    input_ids = np.random.randint(0, 500, size=(60, 16)).astype(np.int64)
+    labels = np.random.randint(0, 2, size=60).astype(np.int64)
+    print(f"   图像: {images.shape}, 文本: {input_ids.shape}")
+
+    print("\n🏗️ 2. 模型创建")
+    from zerotorch.models import MultimodalLite
+    model = MultimodalLite(vocab_size=500, img_dim=64, txt_dim=32, num_classes=2)
+    print(f"   参数量: {model.num_parameters():,}")
+
+    print("\n🏋️ 3. 训练（简化版）")
+    imgs = zt.tensor(images[:8])
+    txt = zt.tensor(input_ids[:8])
+    pred = model(imgs, txt)
+    print(f"   前向输出: {pred.data.shape}")
+    pred.sum().backward()
+    print(f"   反向传播完成")
+
+    print("\n🚀 4. 推理")
+    engine = zt.InferenceEngine(model)
+    print(f"   输入: 图像 + 文本 → 输出匹配概率 {pred.data.shape}")
+
+    print(f"\n✅ 【Multimodal-lite】流程完成！")
+
+
 def main():
     model = sys.argv[1] if len(sys.argv) > 1 else 'all'
 
@@ -238,7 +270,7 @@ def main():
 
     if model in ('resnet', 'all'):
         demo_classification('resnet_lite', zt.models.ResNetLite,
-                           dict(in_channels=1, num_classes=3, channels=[16,32,64,128], img_size=32))
+                           dict(in_channels=1, num_classes=3, channels=[8,16,32,64], img_size=32))
 
     if model in ('yolo', 'all'):
         demo_yolo()
@@ -256,8 +288,7 @@ def main():
         demo_dcgan()
 
     if model in ('multimodal', 'all'):
-        demo_classification('multimodal_lite', zt.models.MultimodalLite,
-                           dict(vocab_size=500, img_dim=64, txt_dim=32, num_classes=2))
+        demo_multimodal()
 
     print(f"\n{'='*60}")
     print("🎉 全部模型流程演示完成！")
