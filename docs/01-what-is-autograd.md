@@ -23,19 +23,25 @@ d = a * b            # d = -6.0
 e = c * d            # e = 6.0
 ```
 
-现在我们想知道：如果让 $e$ 变大一点点，$a$ 该往哪个方向调？调多少？
+现在我们想知道：如果让 e 变大一点点，a 该往哪个方向调？调多少？
 
-这就是 $\frac{\partial e}{\partial a}$。手算一下：
+这就是下面这个偏导。手算一下：
 
-- $\frac{\partial e}{\partial c} = d = -6$，$\frac{\partial e}{\partial d} = c = -1$
-- $\frac{\partial c}{\partial a} = 1$，$\frac{\partial d}{\partial a} = b = -3$
-- 链式法则：$\frac{\partial e}{\partial a} = \frac{\partial e}{\partial c}\cdot\frac{\partial c}{\partial a} + \frac{\partial e}{\partial d}\cdot\frac{\partial d}{\partial a} = (-6)(1) + (-1)(-3) = -3$
+$$\frac{\partial e}{\partial a}$$
+
+$$\frac{\partial e}{\partial c} = d = -6, \qquad \frac{\partial e}{\partial d} = c = -1$$
+
+$$\frac{\partial c}{\partial a} = 1, \qquad \frac{\partial d}{\partial a} = b = -3$$
+
+链式法则把它们拼起来：
+
+$$\frac{\partial e}{\partial a} = \frac{\partial e}{\partial c}\cdot\frac{\partial c}{\partial a} + \frac{\partial e}{\partial d}\cdot\frac{\partial d}{\partial a} = (-6)(1) + (-1)(-3) = -3$$
 
 关键观察：**反向传播不需要重算一遍，它只依赖三件事**。把计算图画出来，这三件事一目了然：
 
 1. **记录前向依赖**——每个中间变量都记得"我是用哪几个数、通过什么运算得到的"（图上的箭头就是依赖关系）。
 2. **记录输入是谁**——每个节点都留着自己的两个父母，反向时才能把梯度"还回去"。
-3. **分支要累加**——一个输入可能通过多条路径影响输出。比如 $a$ 既走 $c=a+b$ 这条路，又走 $d=a\cdot b$ 这条路对 $e$ 有贡献，两条路的梯度必须相加。
+3. **分支要累加**——一个输入可能通过多条路径影响输出。比如 a 既走 c=a+b 这条路，又走 d=a·b 这条路对 e 有贡献，两条路的梯度必须相加。
 
 ```mermaid
 graph LR
@@ -49,26 +55,42 @@ graph LR
     D -->|"∂e/∂d = c = -1"| E
 ```
 
-图里只追踪对 $a$ 的偏导：$a$ 通过 $c$ 这条路贡献 $1 \times (-6) = -6$，又通过 $d$ 这条路贡献 $(-3) \times (-1) = 3$，两条路相加得 $\partial e/\partial a = -3$。边上标的就是这个算子对父节点的偏导。
+图里只追踪对 a 的偏导。a 通过 c 这条路贡献 $1 \times (-6) = -6$，又通过 d 这条路贡献 $(-3) \times (-1) = 3$，两条路相加得：
+
+$$\frac{\partial e}{\partial a} = -6 + 3 = -3$$
+
+边上标的就是这个算子对父节点的偏导。
 
 这就是反向传播。没有任何魔法。
 
 现在才能回答一开始那个问题：**让 e 变大一点点，a 该往哪走？走多远？**
 
-答案就藏在 $\frac{\partial e}{\partial a} = -3$ 这个**负数**里：
+答案就藏在这个负数里：
+
+$$\frac{\partial e}{\partial a} = -3$$
 
 - **符号 = 方向**。导数为负，意味着 a 增大时 e 反而减小。所以要让 e 变大，a 必须往**小**走。
-- **绝对值 = 敏感度**。$|-3|$ 意味着 a 每动 1 个单位，e 大约反向动 3 个单位；这次 a 动了 -0.03，所以 e 大约反向（也就是正向）动 $3 \times 0.03 = 0.09$。
+- **绝对值 = 敏感度**。a 每动 1 个单位，e 大约反向动 3 个单位；这次 a 动了 -0.03，所以 e 大约正向动：
 
-写成一步"梯度上升"就是（$\eta$ 是你选的步长，比如 0.01）：
+$$3 \times 0.03 = 0.09$$
+
+写成一步"梯度上升"就是（η 是你选的步长，比如 0.01）：
 
 $$a_{\text{new}} = a + \eta \cdot \frac{\partial e}{\partial a} = 2 + 0.01 \times (-3) = 1.97$$
 
-我们验证一下：a 从 2 变到 1.97，也就是 $\Delta a = -0.03$。线性近似预测 $\Delta e \approx \frac{\partial e}{\partial a}\Delta a = (-3)\times(-0.03) = +0.09$，即 e 应涨到约 6.09。
+我们验证一下：a 从 2 变到 1.97，也就是 Δa = -0.03。线性近似预测：
 
-实际重算：$e = (a+b)(a \cdot b) = (1.97 - 3)(1.97 \times -3) = (-1.03)(-5.91) = 6.0873$。实际涨幅 0.0873，和预测的 0.09 差不到千分之三——线性近似确实够用。剩下那点误差，就是泰勒展开里被我们扔掉的二阶项。
+$$\Delta e \approx \frac{\partial e}{\partial a}\Delta a = (-3)\times(-0.03) = +0.09$$
 
-> **这就是"训练"的全部本质**：梯度的**符号**告诉你往哪边走，**绝对值**告诉你敏感度，剩下的只是一个你自己定的步长 $\eta$。损失函数要减小、所以用**梯度下降**（公式里把加号改成减号）；逻辑一字不改。
+即 e 应涨到约 6.09。
+
+实际重算：
+
+$$e = (a+b)(a \cdot b) = (1.97 - 3)(1.97 \times -3) = (-1.03)(-5.91) = 6.0873$$
+
+实际涨幅 0.0873，和预测的 0.09 差不到千分之三——线性近似确实够用。剩下那点误差，就是泰勒展开里被我们扔掉的二阶项。
+
+> **这就是"训练"的全部本质**：梯度的**符号**告诉你往哪边走，**绝对值**告诉你敏感度，剩下的只是一个你自己定的步长 η。损失函数要减小、所以用**梯度下降**（公式里把加号改成减号）；逻辑一字不改。
 
 这就是反向传播。没有任何魔法。
 
@@ -138,9 +160,13 @@ class Value:
 > [!WARNING]
 > **最容易搞混的一点：`.grad` 到底是谁对谁的偏导？**
 >
-> 假设 $c = a + b$，那么 `c.grad` 存的是 $\frac{\partial e}{\partial c} = -6$（**输出对 c** 的梯度），**不是** $\frac{\partial c}{\partial a}$。
+> 假设 c = a + b，那么 `c.grad` 存的是输出对 c 的梯度：
 >
-> 规则只有一条：**每个节点的 `.grad` 永远是"输出对我"的偏导**，即上游传来的梯度。至于 $\frac{\partial c}{\partial a} = 1$ 这个"c 对自己输入"的偏导，它**不存下来**——它是在 `c._backward()` 内部当场乘上去的系数：拿到 `out.grad`（也就是 $\partial e/\partial c$），乘以 $\partial c/\partial a$，累加到 `a.grad`。
+> $$\frac{\partial e}{\partial c} = -6$$
+>
+> **不是** $\frac{\partial c}{\partial a}$。
+>
+> 规则只有一条：**每个节点的 `.grad` 永远是"输出对我"的偏导**，即上游传来的梯度。至于 $\frac{\partial c}{\partial a} = 1$ 这个"c 对自己输入"的偏导，它**不存下来**——它是在 `c._backward()` 内部当场乘上去的系数：拿到 `out.grad`（也就是 ∂e/∂c），乘以 ∂c/∂a，累加到 `a.grad`。
 >
 > 一句话：`.grad` 是"上游怎么看我"，算子内部那一步乘的是"我怎么看我的输入"。两者相乘，才是链式法则。
 
@@ -222,6 +248,8 @@ def backward(self):
 ```python
 # examples/01_manual_check.py
 
+from zerotorch.core.value import Value
+
 a = Value(2.0)
 b = Value(-3.0)
 c = a + b
@@ -248,6 +276,8 @@ print(b.grad)   # 期望  4.0
 # examples/01_xor_with_value.py
 
 import random
+
+from zerotorch.core.value import Value
 
 class Neuron:
     def __init__(self, n_in):
@@ -328,7 +358,11 @@ for k in range(200):
 ## 7. 作业（动手才算数）
 
 1. 给 `Value` 加上 `__radd__`、`__truediv__`、`tanh`，每个都先手写偏导再写代码。
-2. 写一个函数 `numerical_check(f, x, eps=1e-5)`，用中心差分 $\frac{f(x+\epsilon)-f(x-\epsilon)}{2\epsilon}$ 对比你写的解析梯度。这是你以后写每个新算子时的编译器。
+2. 写一个函数 `numerical_check(f, x, eps=1e-5)`，用中心差分对比你写的解析梯度：
+
+$$\frac{f(x+\varepsilon)-f(x-\varepsilon)}{2\varepsilon}$$
+
+这是你以后写每个新算子时的编译器。
 3. 把学习率从 0.05 改成 0.5，观察 loss 发散；再改成 0.001，观察收敛变慢。这就是超参数直觉的起点。
 
 ---
