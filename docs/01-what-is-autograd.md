@@ -25,13 +25,9 @@ e = c * d            # e = 6.0
 
 现在我们想知道：如果让 e 变大一点点，a 该往哪个方向调？调多少？
 
-这就是下面这个偏导。手算一下：
+这就是下面这个偏导。手算：$\frac{\partial e}{\partial a}$，
 
-$$\frac{\partial e}{\partial a}$$
-
-$$\frac{\partial e}{\partial c} = d = -6, \qquad \frac{\partial e}{\partial d} = c = -1$$
-
-$$\frac{\partial c}{\partial a} = 1, \qquad \frac{\partial d}{\partial a} = b = -3$$
+其中 $\frac{\partial e}{\partial c} = d = -6$ $\qquad \frac{\partial e}{\partial d} = c = -1$  $\frac{\partial c}{\partial a} = 1$  $\qquad \frac{\partial d}{\partial a} = b = -3$
 
 链式法则把它们拼起来：
 
@@ -157,7 +153,7 @@ class Value:
         return out
 ```
 
-> [!WARNING]
+> [!NOTE]
 > **最容易搞混的一点：`.grad` 到底是谁对谁的偏导？**
 >
 > 假设 c = a + b，那么 `c.grad` 存的是输出对 c 的梯度：
@@ -170,7 +166,7 @@ class Value:
 >
 > 一句话：`.grad` 是"上游怎么看我"，算子内部那一步乘的是"我怎么看我的输入"。两者相乘，才是链式法则。
 
-> [!SUCCESS]
+> [!NOTE]
 > **对应地，`self._backward` 是谁的反向？**
 >
 > 它是**生成 self 的那个运算**的反向函数，不是 self 作为输入参与的下游运算。举例：
