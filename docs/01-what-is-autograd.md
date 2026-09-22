@@ -1,7 +1,3 @@
----
-title: "第 0 幕：30 行代码里的反向传播"
-nav_order: 1
----
 
 # 第 0 幕：30 行代码里的反向传播
 
@@ -23,9 +19,9 @@ d = a * b            # d = -6.0
 e = c * d            # e = 6.0
 ```
 
-现在我们想知道：如果让 e 变大一点点，a 该往哪个方向调？调多少？
+现在我们想知道：如果让 $e$ 变大一点点，$a$ 该往哪个方向调？调多少？
 
-这就是下面这个偏导。手算：$\frac{\partial e}{\partial a}$，
+这就是下面这个偏导。手算：$\frac{\partial e}{\partial a}$ 
 
 其中 $\frac{\partial e}{\partial c} = d = -6$ $\qquad \frac{\partial e}{\partial d} = c = -1$  $\frac{\partial c}{\partial a} = 1$  $\qquad \frac{\partial d}{\partial a} = b = -3$
 
