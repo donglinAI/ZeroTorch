@@ -1,6 +1,6 @@
 
 import random 
-
+import math
 
 class Value:
     def __init__(self, data, _parents=(), _op=''):
@@ -57,6 +57,15 @@ class Value:
         out._backward = _backward
         return out 
     
+    def tanh(self):
+        t = math.tanh(self.data)
+        out = Value(t, (self,), "tanh")
+
+        def _backward():
+            self.grad += (1 - t**2) * out.grad   # tanh 的导数是 1 - tanh^2
+        out._backward = _backward
+        return out
+
     def __pow__(self, k):
         out = Value(self.data ** k, (self, ), f'**{k}')
 
@@ -92,7 +101,7 @@ class Neuron: # 看图，以创建神经元 h_1 为例
         初始化神经元 n = Neuron(n_in=2)
         """
         # 创建 w_11 和 w_12, 并使用-1～1的随机初始化
-        self.w = [Value(random.uniform(-1, 1)) for _ in range(n_in)]
+        self.w = [Value(random.uniform(-0.5, 0.5)) for _ in range(n_in)]
         # 创建 b , 使用 0 初始化
         self.b = Value(0.0)
 
@@ -104,6 +113,7 @@ class Neuron: # 看图，以创建神经元 h_1 为例
         act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)
         # h_1 = relu(act) 
         h = act.relu()
+        # h = act.tanh()
         return h
         # return act
 
@@ -111,12 +121,12 @@ class Neuron: # 看图，以创建神经元 h_1 为例
         # 返回这个神经元所有需要训练的参数 , 即 (w_11, w_21, b)
         return self.w + [self.b]
 
-random.seed(10) # 固定随机种子÷
-n1 = Neuron(2)
-print([x.data for x in n1.w], n1.b.data, [x.data for x in n1.parameters()])
+# random.seed(10) # 固定随机种子÷
+# n1 = Neuron(2)
+# print([x.data for x in n1.w], n1.b.data, [x.data for x in n1.parameters()])
 
-x = [1,10]
-print(n1(x).data)
+# x = [1,10]
+# print(n1(x).data)
 
 class Layer: # 看图，以隐藏层为例，有3个神经元
     def __init__(self, n_in, n_out):
@@ -136,10 +146,10 @@ class Layer: # 看图，以隐藏层为例，有3个神经元
         # 即 [w_11,w_21,b,w_12,w_22,b,w_13,w_23,b]
         return [p for n in self.neurons for p in n.parameters()]
 
-l = Layer(2,3)
-print([x.data for x in l.parameters()])
-print(len(l.parameters()))
-print([d.data for d in l(x)])
+# l = Layer(2,3)
+# print([x.data for x in l.parameters()])
+# print(len(l.parameters()))
+# print([d.data for d in l(x)])
 
 class Layer: # 看图，以隐藏层为例，有3个神经元
     def __init__(self, n_in, n_out):
@@ -178,7 +188,7 @@ class MLP:
 model = MLP(2, [4, 4, 1])   # 2 输入，1 个隐藏层 3 个神经元，1 输出
 data = [([0,0], 0), ([0,1], 1), ([1,0], 1), ([1,1], 0)]
 
-for k in range(2000):
+for k in range(200):
     # 前向：算 loss（这里用最简单的 (pred - y)^2）
     total = Value(0.0)
     for x, y in data:
@@ -196,28 +206,6 @@ for k in range(2000):
 
     if k % 20 == 0:
         print(f"step {k:3d}  loss = {total.data:.4f}")
-
-# model = MLP(2, [4, 4, 1])   # 2 输入，两个隐藏层各 4 个神经元，1 输出
-# data = [([0,0], 0), ([0,1], 1), ([1,0], 1), ([1,1], 0)]
-
-# for k in range(200):
-#     # 前向：算 loss（这里用最简单的 (pred - y)^2）
-#     total = Value(0.0)
-#     for x, y in data:
-#         pred = model(x)
-#         total = total + (pred - Value(float(y))) ** 2
-
-#     # 清零梯度（注意：必须每步清零，否则会累加）
-#     for p in model.parameters():
-#         p.grad = 0.0
-#     # 反向
-#     total.backward()
-#     # 梯度下降：沿着梯度反方向走一小步
-#     for p in model.parameters():
-#         p.data -= 0.05 * p.grad
-
-#     if k % 20 == 0:
-#         print(f"step {k:3d}  loss = {total.data:.4f}")
 
 
 for x, y in [([0,0], 0), ([0,1], 1), ([1,0], 1), ([1,1], 0),([1.5,-0.5],1), ([-0.5,1.5],1), ([-0.5,-0.5],0),([0.5,0.5],0)]:
